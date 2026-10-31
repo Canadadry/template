@@ -2,6 +2,8 @@
 
 <One paragraph: what this project is, and where to start reading.>
 
+(Template not set up yet: run `/setup`.)
+
 ## Checks
 
 - **`make test` is the fast loop**: unit tests, on the host, in seconds, with
