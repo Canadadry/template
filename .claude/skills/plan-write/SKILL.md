@@ -40,7 +40,7 @@ What the conversation left unresolved. Empty if nothing.
 ```
 
 - Every step is small enough to fail fast, and says how it is verified.
-- A step that is entirely a skill's job (`match-unit` over a unit, …) is written `skill: <name> — <scope>`: plan-pilot calls that skill instead of writing a PRD.
+- A step that is entirely a skill's job (a project skill run over one module, …) is written `skill: <name> — <scope>`: plan-pilot calls that skill instead of writing a PRD.
 - English, per `CLAUDE.md`. No "Draft:" line.
 
 ## End

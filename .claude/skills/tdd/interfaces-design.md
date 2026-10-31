@@ -6,15 +6,15 @@ Good interfaces make testing natural. Names are illustrative.
 
    ```python
    # Testable: the caller says where everything is
-   def main(layout_path, elf_path, outdir): ...
+   def import_orders(csv_path, db): ...
 
-   # Hard to test: hidden dependency on the repository layout
-   def main(): elf = open("work/miyoo285_fw/fs/04_customer/app/keymon", "rb")
+   # Hard to test: hidden dependency on the environment
+   def import_orders(): rows = open("/var/data/orders.csv"); db = connect(os.environ["DB_URL"])
    ```
 
 2. **Return results, don't only print them**
 
-   A function that computes a comparison returns it (a list of differing offsets); the command-line layer prints it and sets the exit status.
+   A function that computes a report returns it (a list of rejected rows); the command-line or HTTP layer prints it and sets the exit status or response code.
 
 3. **Small surface area**
    - Fewer entry points = fewer tests needed
@@ -22,8 +22,8 @@ Good interfaces make testing natural. Names are illustrative.
 
 4. **Keep the core pure; push I/O to the top**
 
-   Decoding, labeling and comparing work on bytes and dicts; reading files and running the toolchain happens in a thin top layer.
+   Parsing, validating and computing work on plain values; reading files, calling services and writing to the database happen in a thin top layer.
 
 5. **Fail at the boundary**
 
-   Every entry point checks what it requires (a known relocation type, an address inside a segment, a layout range that exists) and stops with a message naming the input, so a bad layout fails at once, not as a byte difference three steps later.
+   Every entry point checks what it requires (a known format, a value in range, a reference that exists) and stops with a message naming the input, so bad input fails at once, not as a wrong result three steps later.

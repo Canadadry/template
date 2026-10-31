@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: Internal — called in place by prd-autopilot, match-unit and fix-bug. Runs the tests, stages only the current work, writes a conventional commit message, commits.
+description: Internal — called in place by prd-autopilot and fix-bug. Runs the tests, stages only the current work, writes a conventional commit message, commits.
 ---
 
 # git-commit
@@ -18,7 +18,7 @@ Use these scripts (separate calls) instead of ad hoc `git diff` invocations:
 Never `git add .` or `git add -A`.
 
 ### 2. Run the tests
-Code changed → `make test` must be green; red → stop and report, commit nothing. Something under `src/` or `scripts/` changed → `make rebuild` must be identical (keymon) and `make mainui-check` green (MainUI) too (`CLAUDE.md` § Matching decompilation). Only `.md` files changed → skip both.
+Code changed → `make test` must be green; red → stop and report, commit nothing. Only `.md` files changed → skip it. The net (`make check`) is not run here: `check-net` runs it once per PRD, before any push.
 
 ### 3. Check new comments
 A comment on an added line says what the code cannot: a trap, a contract, the evidence behind a name or a flag (an address, a string, a call site). Work-log narration ("step 3", "tried X") goes in the commit message instead; remove it before staging. Never touch unchanged lines.
@@ -34,12 +34,12 @@ Only the files of this unit of work; leave the rest unstaged.
 Present the proposal to whoever holds the gate:
 
 ```
-Files: src/keymon/hall.c, src/keymon/layout.json
-Message: feat: match the hall sensor poll of keymon
+Files: src/importer.py, tests/test_importer.py
+Message: feat: import CSV files with a header row
 ```
 
 - `fix-bug` run by the user → the user; wait for the go-ahead.
-- Any unattended caller (`prd-autopilot`, `match-unit`, `fix-bug` under `check-rebuild` or `plan-pilot`) → the caller accepts or refuses on its own checks; nobody waits.
+- Any unattended caller (`prd-autopilot`, a `skill:` step's skill, `fix-bug` under `check-net` or `plan-pilot`) → the caller accepts or refuses on its own checks; nobody waits.
 
 ### 6. Commit
 On acceptance: `git add <files>`, then commit with the agreed message, plus the attribution trailers the session's instructions ask for, if any.
@@ -62,7 +62,7 @@ While it exists (a `plan-pilot` run), the hook installed by `scripts/progress_ch
 
 | Type | When |
 |------|------|
-| `feat:` | New user-visible behavior, or functions newly matched in C |
+| `feat:` | New user-visible behavior |
 | `fix:` | Bug correction |
 | `test:` | Adding or updating tests only |
 | `refactor:` | Code restructuring, no behavior change |

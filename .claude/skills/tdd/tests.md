@@ -1,27 +1,27 @@
 # Good and Bad Tests
 
-Tests live in `tests/test_<module>.py`: `unittest.TestCase` classes, run by `make test` (`python3 -m unittest discover tests`). Prior art: `tests/test_sstar_unpack.py` builds a fake image with `tests/make_fake_image.py` and checks what the unpacker finds in it. Other names below are illustrative.
+Tests follow the project's layout and runner, run by `make test` (`CLAUDE.md` § Checks); the existing tests are the prior art. The examples below are Python and illustrative.
 
 ## Good Tests
 
-**Integration-style**: test through the script's entry point or the functions it exposes, on an input the test builds.
+**Integration-style**: test through the module's entry point or the functions it exposes, on an input the test builds.
 
 ```python
-# GOOD: observable behavior, on a synthetic image
-def test_fatload(self):
-    _, parts = sstar_unpack.parse(build(PARTS, "fatload"))
-    self.assertEqual([p.name for p in parts], ["sf_0x0", "KERNEL", "rootfs", "customer"])
+# GOOD: observable behavior, on a small input built by the test
+def test_rejects_rows_without_an_email(self):
+    report = import_orders(write_csv(self.tmp, ["name,email", "Ann,", "Bob,bob@example.com"]), self.db)
+    self.assertEqual(report.rejected_lines, [2])
 ```
 
 Characteristics:
 
-- Tests behavior callers care about (what lands in the output, what the build reports)
-- Uses only what the script exposes
+- Tests behavior callers care about (what lands in the output, what the command reports)
+- Uses only what the module exposes
 - Survives internal refactors
 - Name describes WHAT, not HOW
 - One logical assertion per test
 
-For the generator and the comparison tools, build the input in the test: assemble a few lines with `$CROSS`-as into a `.o`, link a tiny ELF, then run the tool on it and check its output (a `MATCH`, a `DIFF` at the right offset, a `.s` that reassembles to the same bytes). Never read `work/` or `firmware/`.
+Build the input in the test (a temporary file, a few rows, a fake client), then run the code on it and check its output. Never read production data or reach the network.
 
 ## Bad Tests
 
@@ -29,9 +29,10 @@ For the generator and the comparison tools, build the input in the test: assembl
 
 ```python
 # BAD: asserts on a private helper's intermediate state
-def test_labels_dict(self):
-    src = elf2s.Source(layout, ".", elf, path)
-    self.assertIn(0x12568, src.labels)
+def test_parsed_rows_cache(self):
+    importer = Importer(path)
+    importer._parse()
+    self.assertEqual(len(importer._rows), 3)
 ```
 
 Red flags:
@@ -41,19 +42,19 @@ Red flags:
 - Test breaks when refactoring without behavior change
 - Test name describes HOW, not WHAT
 - Verifying through a side channel instead of the output
-- Depending on the firmware being extracted
+- Depending on data or services outside the test
 
 ## Assertions and Tests: Complementary Layers
 
-Tests verify behavior from the outside. Assertions (`raise SystemExit` with a message, `assert` for internal invariants) enforce contracts from the inside. Both are needed.
+Tests verify behavior from the outside. Assertions (an exception with a message, `assert` for internal invariants) enforce contracts from the inside. Both are needed.
 
 ```python
-# Without a check: an unknown relocation is silently not masked, a diff appears later
-masks[off] = FIELD.get(t, 0)
+# Without a check: an unknown currency silently converts at rate 0, a wrong total appears later
+amount = value * RATES.get(currency, 0)
 
 # With a check: fails at the violated contract
-if t not in FIELD:
-    raise SystemExit(f"{name}: unhandled relocation type {t} at {off:#x}")
+if currency not in RATES:
+    raise ValueError(f"line {line}: unknown currency {currency!r}")
 ```
 
 Rule of thumb: if a test setup must respect a constraint to call a function, that constraint is checked inside the function.

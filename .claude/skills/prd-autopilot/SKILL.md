@@ -1,11 +1,11 @@
 ---
 name: prd-autopilot
-description: Internal — called by plan-pilot for each step. Implements every PRD in docs/prd/triage/ via tdd or match-function, commits, runs check-rebuild, pushes; repeats until the queue is empty.
+description: Internal — called by plan-pilot for each step. Implements every PRD in docs/prd/triage/ via tdd, commits, runs check-net, pushes; repeats until the queue is empty.
 ---
 
 # PRD Autopilot
 
-Runs the PRD triage queue unattended: implement, verify, commit, check the rebuild net, push, repeat.
+Runs the PRD triage queue unattended: implement, verify, commit, check the net, push, repeat.
 
 ## Rule — never wait on the human
 Never relay a `QUESTION:` to the user; resolve it via a fresh `guideline` agent and send its `DECISION:` back to the asker.
@@ -18,12 +18,12 @@ Take the lowest-numbered file in `docs/prd/triage/*.md`; if none remain, report 
 If the PRD has an `## Implementation Chunks` section, treat each chunk as its own unit of work: run steps 2-4 once per chunk, in dependency order, each with its own implementer, verifier and commit. Otherwise the whole PRD is one unit.
 
 ### 2. Spawn a fresh implementer agent
-A new, memoryless agent (no isolation) implements the PRD — or only the current chunk — via the `tdd` skill for tooling, or the `match-function` skill for C that must compile to the original bytes; it updates `README.md` if user-visible behavior changed (a new target, a new script), and never touches git.
+A new, memoryless agent (no isolation) implements the PRD — or only the current chunk — via the `tdd` skill; it updates `README.md` if user-visible behavior changed (a new command, a new option), and never touches git.
 
 Reporting contract: `QUESTION:` + question when blocked, or `DONE:` + summary — `DONE:` means implemented, not verified.
 
 ### 3. Verify
-A second fresh agent reruns `make test` (the fast loop — never the net here, unless the chunk changed C under `src/`: C under `src/keymon/` is proven only by `make rebuild`, C under `src/mainui/` only by `make mainui-check`, not by fncmp's masked MATCH) and confirms the diff touches the PRD's expected files.
+A second fresh agent reruns `make test` (the fast loop — never the net here: that is step 5's job, once per PRD) and confirms the diff touches the PRD's expected files.
 
 It reports `VERIFIED:`, or `FAILED:` plus detail — which stops the loop and goes to the user, nothing committed.
 
@@ -34,14 +34,14 @@ With `progress.md` at the root: the PRD's first commit adds, under the current s
 
 More chunks remain → back to step 2 for the next one; the PRD stays in triage until its last chunk lands.
 
-### 5. Check the rebuild net, push, graduate
-Once the last (or only) chunk is committed, invoke the `check-rebuild` skill in place.
+### 5. Check the net, push, graduate
+Once the last (or only) chunk is committed, invoke the `check-net` skill in place.
 
-- `REBUILD-GREEN:` → `git rm` the PRD from triage and commit that deletion (`docs:`, naming the file; folded into `HEAD` when `progress.md` exists, see `git-commit`), then `git push -u origin <current branch>`. This is the only push of the cycle: the remote only ever receives states where the net is green (`make rebuild` identical, `make mainui-check` passing).
-- `REBUILD-FAILED:` → stop the loop and report to the user. Don't push, and leave the PRD in triage.
+- `NET-GREEN:` → `git rm` the PRD from triage and commit that deletion (`docs:`, naming the file; folded into `HEAD` when `progress.md` exists, see `git-commit`), then `git push -u origin <current branch>`. This is the only push of the cycle: the remote only ever receives states where the net is green (`make check` passing).
+- `NET-FAILED:` → stop the loop and report to the user. Don't push, and leave the PRD in triage.
 
 ### 6. Loop
 Back to step 1 until the queue is empty. Continue in place — never re-invoke `prd-autopilot` through the Skill tool, which restarts the loop and drops this run's progress.
 
 ## Stopping conditions
-The queue empties, the user interrupts, a verifier reports `FAILED:`, or `check-rebuild` reports `REBUILD-FAILED:`.
+The queue empties, the user interrupts, a verifier reports `FAILED:`, or `check-net` reports `NET-FAILED:`.

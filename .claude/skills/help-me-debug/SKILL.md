@@ -35,9 +35,9 @@ Follow this loop, returning to it as many times as needed:
 
 ## Who runs the test
 
-You do, in this container: nobody else is there, and there is no device (`CLAUDE.md`). Reproduce through the build and the checks (`make rebuild` for keymon, `make mainui-check` for MainUI, `make test`), `cmp`, `readelf`, `objdump`, `scripts/fncmp.py` for one function or pair (its masked MATCH does not prove relocated fields), at most `qemu-arm` on an extracted binary. Throwaway programs and instrumented copies go in `tmp/`; never change `src/`, `scripts/` or `tests/`.
+You do, in this session's environment: nobody else is there, and there is no access to production or to the reporter's machine. Reproduce through the build and the checks (`make test`, `make check`, a single test), a debugger, logs, throwaway programs. Throwaway programs and instrumented copies go in `tmp/`; never change anything outside it.
 
-Your environment differs from the device's. A test that only their environment could run is not a proof you can get: name it as the missing observation, never presume its result.
+Your environment differs from the reporter's. A test that only their environment could run is not a proof you can get: name it as the missing observation, never presume its result.
 
 ## When the report jumps to a conclusion
 

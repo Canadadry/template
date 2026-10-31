@@ -13,7 +13,7 @@ No human responds during this run. Every `QUESTION:` from any sub-agent goes to 
 
 `progress.md` at the root is the run's checklist: what is done and what is left, read by the user while you work. Before the first step:
 
-1. Make sure the net can run (Docker daemon, `miyoo-re` image, extracted firmware: `notes/next-session.md`, `CLAUDE.md` § Cloud sessions) and is green before any step: `make rebuild` byte-identical (keymon) and `make mainui-check` passing (MainUI). A red net at the start is reported, not worked around. Then run `scripts/progress_check.sh --install`. From then on git refuses any commit that ticks no new `[x]` in `progress.md`; `git-commit` § `progress.md` says how each commit satisfies it.
+1. Make sure the net can run (whatever `CLAUDE.md` § Checks says it needs) and is green before any step: `make check` passing. A red net at the start is reported, not worked around. Then run `scripts/progress_check.sh --install`. From then on git refuses any commit that ticks no new `[x]` in `progress.md`; `git-commit` § `progress.md` says how each commit satisfies it.
 2. `progress.md` exists and every item is `[x]` (a finished run) → `git rm` it, and that run's plan file if it is still in `docs/`, and commit (`docs:`). Some item is `[ ]` → it is this plan's, resumed: keep it, or stop and report if it belongs to another plan.
 3. No `progress.md` → write it: a nested `- [ ]` list indented by 2 spaces, one top-level item per group of steps as the plan names them (phase, part, chunk…), one child per step, `[x]` for each step that already has a note. Commit it (`docs:`).
 
@@ -31,7 +31,7 @@ The plan's `Step notes` section (whatever its number) is the progress record: on
 
 ### 2. Run it
 
-**A `skill: <name> — <scope>` step** → invoke that skill in place on the given scope, handing it the step's whole text verbatim with the scope (the budget, an override of a source file, header or rules section are read from it), following its own unattended rules. No PRD. Each of its commits adds its own `- [x]` child (the module, the unit) under the step's item. Then run `check-rebuild` and push, as prd-autopilot does after a PRD.
+**A `skill: <name> — <scope>` step** → invoke that skill in place on the given scope, handing it the step's whole text verbatim with the scope (its scope and any limits, such as a budget, are read from it), following its own unattended rules. No PRD. Each of its commits adds its own `- [x]` child (the module, the unit) under the step's item. Then run `check-net` and push, as prd-autopilot does after a PRD.
 
 **Any other step:**
 
@@ -41,7 +41,7 @@ The plan's `Step notes` section (whatever its number) is the progress record: on
 **Write the next PRD in parallel.** While step N is being implemented, spawn the PRD agent for step N+1 in the background — it only reads, so it never conflicts with the implementer. Its prompt adds: step N is not done yet; every assumption about N's outcome is an explicit hypothesis labelled `H-<N>-k`; read nothing uncommitted. It writes to `docs/prd/next/`, not `docs/prd/triage/`. When N's note is written, compare the hypotheses with it: all hold → move the PRD to `docs/prd/triage/`; any fails → send the same agent back to update it first. Never start N+1's implementation before N is done.
 
 ### 3. Bugs
-A bug reported by any agent, at any point, that the current step did not set out to fix: invoke `fix-bug` in place on it, unattended — you are the human at its commit gate, with the checks `check-rebuild` step 4 lists. It lands as its own `fix:` commit; then resume the step.
+A bug reported by any agent, at any point, that the current step did not set out to fix: invoke `fix-bug` in place on it, unattended — you are the human at its commit gate, with the checks `check-net` step 4 lists. It lands as its own `fix:` commit; then resume the step.
 
 ### 4. Write the step note
 Append `### Step <phase>.<step>` to the `Step notes` section: what was done, what deviated from the plan and why, every scope decision `guideline` made. A few lines, facts only. Consult `plan-review` now if step 6 calls for it, so its accepted changes ride in this commit. Tick the step's item in `progress.md` (and its group's, once all the group's children are `[x]`), commit both (`docs:`) and push. This note is what the next step's PRD and any later resume read.
@@ -56,11 +56,11 @@ After any step that was risky or taught something new, spawn a fresh `plan-revie
 
 Only when the plan is finished — the commit removing the plan file and `progress.md` pushed — open a pull request against the default branch with the GitHub tools. A run that stops on a failure or waits on the human opens none. The plan file is gone by then: write the body from the step notes as they were before that commit. One may already exist for the branch (opened automatically, titled after the first commit): update its title and body instead of opening another.
 
-- **Title**: `Plan <N>: <outcome>` — what the run delivered and, if it fell short, how, in under 100 characters. Never a commit subject. Example: `Plan 1: keymon rebuilt from C only, byte-identical — 3 functions still in asm`.
+- **Title**: `Plan <N>: <outcome>` — what the run delivered and, if it fell short, how, in under 100 characters. Never a commit subject. Example: `Plan 1: CSV import end to end — Excel files still unsupported`.
 - **Body**: one line on the plan and how the run ended; one section per step with its result in figures, taken from its step note; what the reviewer must act on (a setup to rerun, a changed interface); what is left open (`warn-review` warnings not acted on, an item the human waived). Mirror the repository's PR template if it has one.
 - Never merge it (CLAUDE.md § What we don't do).
 
 ## Boundaries
 
 - Never change a step's content or scope yourself — only accepted `plan-review` proposals change the plan, and those are method-only.
-- Stop and report to the user only when the plan is complete, or when `prd-autopilot`, `match-unit`, `check-rebuild` or `fix-bug` stops with a failure, opening the pull request only in the first case (§ Pull request).
+- Stop and report to the user only when the plan is complete, or when `prd-autopilot`, a `skill:` step's skill, `check-net` or `fix-bug` stops with a failure, opening the pull request only in the first case (§ Pull request).

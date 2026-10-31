@@ -1,6 +1,6 @@
 ---
 name: fix-bug
-description: Fixes one reported bug end to end — proven cause, failing test, minimal fix, independent check, commit. Also called unattended by check-rebuild and plan-pilot.
+description: Fixes one reported bug end to end — proven cause, failing test, minimal fix, independent check, commit. Also called unattended by check-net and plan-pilot.
 ---
 
 # fix-bug
@@ -15,15 +15,15 @@ One invocation = one bug. It is not a loop over a backlog; to chain bugs, invoke
 
 **Called by the user.** No report given → ask for the symptom and how they hit it. Then the run is unattended until stage 4, where `git-commit`'s proposal waits for the user's go-ahead. Those are the only two moments this skill talks to a human.
 
-**Called by `check-rebuild` or `plan-pilot`.** Nobody is there. The caller writes the report, and the caller is the human at the commit gate: it checks the fix itself and accepts or refuses.
+**Called by `check-net` or `plan-pilot`.** Nobody is there. The caller writes the report, and the caller is the human at the commit gate: it checks the fix itself and accepts or refuses.
 
 ## Rule #1 — the sub-agents never wait on a human
 
 Any `QUESTION:` from a sub-agent is answered by a fresh `guideline` agent, relayed back — never by pausing for the user.
 
-This bites hardest on stage 1: tell the debug agent that it runs every test itself, in this container, so it designs tests it can run rather than tests that need the device.
+This bites hardest on stage 1: tell the debug agent that it runs every test itself, in its own environment, so it designs tests it can run rather than tests that need the reporter's machine or production.
 
-Be honest about what this costs: a bug may have been observed on the device or on the reporter's machine, while this pipeline proves causes in a container with no device. A cause proven here is proven *about the code and the bytes*, not about the device. When the debug agent can only reach an environment-dependent hypothesis, that is an `UNPROVEN:` (see stage 1's gate) — not a green light.
+Be honest about what this costs: a bug may have been observed in production or on the reporter's machine, while this pipeline proves causes in a session environment. A cause proven here is proven *about the code*, not about that environment. When the debug agent can only reach an environment-dependent hypothesis, that is an `UNPROVEN:` (see stage 1's gate) — not a green light.
 
 ## Rule #2 — no fix before a proven cause
 
@@ -33,11 +33,11 @@ Stage 2 never starts on a plausible cause. The gate after stage 1 is the whole p
 
 Put these in each sub-agent prompt — a fresh agent knows none of them:
 
-- **No device access** (`CLAUDE.md`). Reproduction runs in the container: the build, `cmp`, `objdump`, `scripts/fncmp.py`, at most `qemu-arm` on an extracted binary.
+- **No access to production or to the reporter's machine.** Reproduction runs in the session's environment: the build, the tests, the checks, throwaway programs.
 - **Only the orchestrator touches git.** Sub-agents never commit, stage, stash, branch or push.
-- **The suites are `make test` (tooling, host), `make rebuild` (keymon byte-identical, container) and `make mainui-check` (MainUI per function against its reference, container; exit 2 on a missing input is setup, not the bug)** — prefer the Makefile targets over invoking a runner directly.
-- **The original bytes are the reference.** A bug is judged against the original bytes (keymon's whole binary, byte-identical; MainUI's per function and data row, through `make mainui-check`; fncmp's masked MATCH is not the proof) and the tests, and against the repository's own conventions, cited from a real site in the tree. Ghidra's output in `decomp/` helps to understand an intent, never as the yardstick a fix must match.
-- Throwaway repro programs go in `tmp/`, never in `src/` or `tests/`.
+- **The suites are `make test` (the fast loop) and `make check` (the net, `CLAUDE.md` § Checks; a failure naming a missing service or input is setup, not the bug)** — prefer the Makefile targets over invoking a runner directly.
+- **The reference is the expected behavior**: the tests, the documentation, the PRD or plan that specified it, and the repository's own conventions, cited from a real site in the tree.
+- Throwaway repro programs go in `tmp/`, never in the source or test directories.
 
 ## Pipeline
 
@@ -45,7 +45,7 @@ Put these in each sub-agent prompt — a fresh agent knows none of them:
 
 Spawn a fresh, memoryless agent running the `help-me-debug` skill. Hand it the bug report **verbatim** — never your paraphrase, and never your own early theory. A summary is exactly where an unproven hypothesis quietly becomes a premise.
 
-Its mandate: understand and prove, **change nothing** under `src/` or `tests/`. It may build, run, instrument throwaway copies in `tmp/`, and read anything.
+Its mandate: understand and prove, **change nothing** outside `tmp/`. It may build, run, instrument throwaway copies in `tmp/`, and read anything.
 
 Reporting contract:
 - `PROVEN:` followed by the bug document from `help-me-debug`'s own template (Summary / Reproduction / Established cause / Scope / Inputs for prioritization / Unverified leads).
@@ -63,7 +63,7 @@ Spawn a fresh, memoryless agent running the `tdd` skill. Hand it the stage-1 bug
 
 Its mandate, in this order:
 
-1. **RED first**: a test that fails *because of this bug*, exercising the real path through the public interface — never one that asserts the shape of the fix. For tooling, drive it through its command-line entry point on a small synthetic input the test builds itself (an assembled `.o`, a tiny linked ELF), never on the firmware. A bug in a C file under `src/` needs no new test: `make rebuild` going identical again (keymon) or `make mainui-check` passing the item (MainUI) is the proof. Never edit an expected sha256, never touch `check-allow.tsv`, `check-pending.tsv` or the check's reference to get green.
+1. **RED first**: a test that fails *because of this bug*, exercising the real path through the public interface — never one that asserts the shape of the fix. Drive it through the module's entry point on a small input the test builds itself, never on production data or an external service. A bug that a check other than a test reports (a lint or type error) needs no new test: that check going green is the proof. Never weaken a check to get green (`CLAUDE.md` § Checks).
 2. **GREEN**: the minimal fix the proven cause justifies. Nothing adjacent, no cleanup, no refactor of neighbouring code.
 3. `make test` fully green.
 
@@ -75,8 +75,8 @@ Reporting contract: `DONE:` plus what the test asserts, which files and lines ch
 
 Spawn a third fresh, memoryless agent. It is not handed the implementer's reasoning as truth; it re-establishes the facts itself:
 
-1. **Prove the new test actually detects the bug**: rebuild a throwaway copy of the pre-fix code under `tmp/` (or revert the fix in a scratch copy) and show the new test failing against it, then passing against the tree. A test that passes both ways proves nothing — this repo already caught two such tests exactly this way.
-2. Run `make test`, `make rebuild` and `make mainui-check` in full.
+1. **Prove the new test actually detects the bug**: rebuild a throwaway copy of the pre-fix code under `tmp/` (or revert the fix in a scratch copy) and show the new test failing against it, then passing against the tree. A test that passes both ways proves nothing — this is the most common way a fix pipeline fools itself.
+2. Run `make test` and `make check` in full.
 3. Read the diff: it must touch only what the proven cause justifies, and nothing else.
 
 Reporting contract: `VERIFIED:` plus the evidence for each point, or `FAILED:` plus what broke.
@@ -89,7 +89,7 @@ Invoke the `git-commit` skill **yourself, in place** — never in a sub-agent. I
 
 The commit message is where the finding is recorded — no journal file, no prose in the code. Write it in English, strictly factual, from the stage-1 bug document and the stage-3 evidence:
 
-- the symptom as reported, and what surfaced it (`make rebuild`, `make mainui-check`, a unit test, a review);
+- the symptom as reported, and what surfaced it (`make check`, a unit test, a review, a user);
 - **the hypothesis that was disproved**, when there was one — as valuable as the cause itself, since it's what spares the next reader the same detour;
 - the proven cause, with file/function references;
 - the fix retained, and what was deliberately *not* changed.

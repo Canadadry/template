@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: Internal — called by prd-autopilot and fix-bug implementers, for the tooling. Red-green-refactor, one behavior at a time, tests through the public interface.
+description: Internal — called by prd-autopilot and fix-bug implementers. Red-green-refactor, one behavior at a time, tests through the public interface.
 ---
 
 # Test-Driven Development
@@ -57,9 +57,7 @@ A blocking question the inputs can't settle → end with `QUESTION:`; your calle
 
 ## Where tests live
 
-This skill is for the tooling (`scripts/`): matching a function to the original bytes is `match-function`'s job, not this one's.
-
-One `tests/test_<module>.py` per module (`unittest`), run by `make test` on the host, in seconds. A test drives the module's entry point (its `main`, or the functions the script exposes) on a small synthetic input the test builds itself — never on the firmware or `work/`. A test that needs the ARM toolchain finds it through `$CROSS` the way the scripts do.
+Follow the project's layout and runner (`CLAUDE.md` § Checks; the existing tests are the prior art): one test file per module, run by `make test` on the host, in seconds. A test drives the module's public entry point on a small input the test builds itself — never on production data, never through the network or an external service.
 
 ### 2. Tracer Bullet
 
