@@ -13,8 +13,9 @@ test-driven implementation, bug fixing with proven causes, and commits.
    /setup
    ```
 
-   It asks a few questions, one at a time, then fills `CLAUDE.md`, wires
-   `make test` and `make check` to your project's tools, trims what you don't
+   It asks a few questions, one at a time (the project, its stack and
+   tools), then scaffolds a minimal skeleton with one passing test, wires
+   `make test` and `make check`, fills `CLAUDE.md`, trims what you don't
    need, proves both targets green and commits.
 3. Start your first piece of work, in a new session:
 
@@ -43,7 +44,7 @@ question: a `guideline` agent answers instead).
 
 | Skill | Use it to |
 |-------|-----------|
-| `/setup` | Configure a new project made from this template (once) |
+| `/setup` | Bootstrap a new, empty project made from this template (once) |
 | `/grill-me` | Get interviewed about a plan or design until every decision is made |
 | `/plan-write` | Turn that conversation into `docs/plan-<N>.md` |
 | `/plan-converge <plan>` | Sharpen the plan with review rounds until they come back empty |

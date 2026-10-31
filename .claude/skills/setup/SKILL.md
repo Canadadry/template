@@ -1,54 +1,67 @@
 ---
 name: setup
-description: Sets up a new project made from this template — fills CLAUDE.md, wires make test and make check to the project's real tools, trims what the project doesn't need, proves both targets green, commits. Run once, right after creating the repository.
+description: Bootstraps a new, empty project created from this template — picks the stack with the user, scaffolds a minimal skeleton with one passing test, wires make test and make check, fills CLAUDE.md, trims what the project doesn't need, proves both targets green, commits. Run once, right after creating the repository.
 ---
 
 # setup
 
-Turns this template into the user's project in one sitting. Interactive: the user answers, you write. Questions are asked **in plain text, one at a time** — `AskUserQuestion` is denied in `.claude/settings.json` (unattended runs must never block on it), so don't try it.
+Runs on a repository just created from this template: it holds the template's files and no project code. Your job is to leave a project that builds, with one passing test and a green net, so the first `/grill-me` starts on solid ground.
 
-Explore before asking: a question the repository can answer (the language, the test runner, an existing CI file) is answered from it, and only confirmed with the user.
+Interactive: the user answers, you write. Questions are asked **in plain text, one at a time** — `AskUserQuestion` is denied in `.claude/settings.json` (unattended runs must never block on it), so don't try it. Whenever a question has a sensible default, propose it so the user can just say yes.
 
-## 1. Read the current state
+## 1. Check the starting point
 
-- `CLAUDE.md`: which sections still hold a `<placeholder>`.
-- `Makefile`: `test` and `check` as the template ships them.
-- The tree: languages, package manifests (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, …), an existing test runner, linters, a CI workflow under `.github/workflows/`.
-- `git log`, the current branch and the remote.
-
-Report in a few lines what you found and what you'll ask about.
+- The tree holds only the template's files (`.claude/`, `CLAUDE.md`, `Makefile`, `README.md`, `scripts/progress_*`, `tests/test_progress_tidy.py`, `.gitignore`) and `CLAUDE.md` still says "Template not set up yet". Anything else (project code already there, setup already done) → tell the user and ask whether to go on; never overwrite their files.
+- `make test` passes on the template as shipped. Red → report it before changing anything.
+- Note the current branch and the remote.
+- Note which toolchains are installed in this session (`python3`, `node`, `go`, `cargo`, `java`…): it bounds what can be proven green here.
 
 ## 2. Ask, one question at a time
 
-Skip any question the tree already answers; confirm the answer instead.
+1. **The project**: what it is and who it's for, in one or two sentences.
+2. **The stack**: language, and the kind of project (CLI, library, web service, web app…). Propose a default from the answer to 1.
+3. **The tools**: for the chosen stack, propose the standard set and let the user amend it — package manager, test runner, formatter, linter, type checker. Keep it to what the stack's community uses by default; nothing exotic.
+4. **The net**: beyond lint, format and type checks, anything else that must be green before a push (a build, integration tests…) and what it needs (a service, a container, credentials). "Nothing yet" is a valid answer: the net grows with the project.
+5. **Ground rules**: project-specific rules every change must respect, and the goal each one serves (`warn-review` flags violations, `guideline` decides by them). None is a valid answer — they can be added later.
+6. **Language**: everything in the repository in English, the conversation in the user's language? Keep, or change.
+7. **The plan pipeline** (`grill-me` → `plan-write` → `plan-converge` → `plan-pilot`, and its unattended helpers): keep it all, or only the interactive skills (`grill-me`, `fix-bug`, `git-commit`, `tdd`)?
+8. **CI**: a GitHub Actions workflow running `make check` on pushes and pull requests — yes or no?
 
-1. **The project**: what it is, in one or two sentences, and where a new reader should start.
-2. **The fast loop**: the command that runs the unit tests in seconds, on the host, without network. None yet → propose the language's standard runner.
-3. **The net**: the slower checks that must be green before a push — lint, type check, formatter check, integration or end-to-end tests, build. For each: its command and what it needs to run (a service, a container, credentials, a tool to install).
-4. **Ground rules**: project-specific rules every change must respect, and the goal each one serves (`warn-review` flags violations, `guideline` decides by them). None is a valid answer.
-5. **Language**: everything in the repository in English, the conversation in the user's language? Keep, or change.
-6. **The plan pipeline** (`grill-me` → `plan-write` → `plan-converge` → `plan-pilot`, and its unattended helpers): keep it all, or only the interactive skills (`grill-me`, `fix-bug`, `git-commit`, `tdd`)?
+Then sum up the choices in a short list and get a go-ahead before writing anything.
 
-## 3. Write
+## 3. Scaffold
 
-- **`CLAUDE.md`**: replace every placeholder with the answers, and drop the "Template not set up yet" line. § Checks names the real commands and what the net needs; § Ground rules lists the rules with their goals, or is deleted; § Language follows answer 5. Keep the sections the skills cite: § Checks, § Ground rules (if kept), § Language, § What we don't do, § Plans (if the pipeline is kept).
-- **`Makefile`**: `test` runs the project's fast loop **and** `python3 -m unittest discover tests` (it covers `scripts/progress_*`, which `plan-pilot` relies on; drop it only with the pipeline). `check` depends on `test` and runs each slow check, one target per check so `make -k check` reports them all. Keep `help` in sync.
-- **The pipeline dropped** (answer 6) → `git rm` `plan-write`, `plan-converge`, `plan-review`, `plan-pilot`, `prd-autopilot`, `to-prd`, `check-net`, `warn-review`, `guideline`, `plan-progress`, `scripts/progress_*`, `tests/test_progress_tidy.py`, and § Plans of `CLAUDE.md`. Then fix what still names them: `fix-bug` (its unattended mode), `git-commit` (§ `progress.md` and the unattended callers), `tdd`'s description. `fix-bug` then asks the user its sub-agents' questions directly instead of spawning `guideline`.
-- **`.gitignore`**: add the language's build output and dependency directories.
-- **`README.md`**: replace the template's text with the project's name and description; keep § Working with Claude.
-- **CI** (only if the user wants it): a workflow that runs `make check` on pushes and pull requests.
+The skeleton is the smallest thing the tools can run on — no feature, no speculative structure:
 
-## 4. Prove it
+- the manifest of the package manager, with the chosen tools as dev dependencies and their configuration (in the manifest when the tool supports it, rather than one file per tool);
+- the source directory with one module holding one trivial function;
+- one test of that function, through its public interface, in the runner's usual place — the prior art `tdd` will follow;
+- the language's build output and dependency directories added to `.gitignore`.
 
-Run `make test`, then `make check`. Both must pass. A red target is reported to the user with its output: fix the setup with them (a missing tool, a wrong command), never by weakening a check. A target that cannot run in this session (a missing service) is said plainly, and how to run it is written in `CLAUDE.md` § Checks.
+Install the dependencies so the next step can run them.
 
-## 5. Commit
+## 4. Wire the targets
 
-Run `git-commit` in place; the user holds the gate. One commit, `chore: set up <project name> from the template`.
+- **`Makefile`**: `test` runs the project's test runner **and** `python3 -m unittest discover tests` (it covers `scripts/progress_*`, which `plan-pilot` relies on; drop it only with the pipeline). Keep the project's tests and the template's apart if the runners would collide (e.g. the project's tests outside `tests/`, or the template's under `tests/template/`). `check` depends on `test` plus one target per slow check (`lint`, `format-check`, `typecheck`…) so `make -k check` reports them all. Add `install` for the dependencies. Keep `help` in sync.
+- **`CLAUDE.md`**: replace the placeholder and drop the "Template not set up yet" line. § Checks names the real commands, the install step, and what the net needs; § Ground rules lists the rules with their goals, or is deleted; § Language follows answer 6. Keep the sections the skills cite: § Checks, § Ground rules (if kept), § Language, § What we don't do, § Plans (if the pipeline is kept). Add a line on the source layout.
+- **`README.md`**: the project's name and description, how to install and run the tests; keep § Working with Claude, drop the template's Quickstart.
+- **CI** (answer 8): a workflow that installs the toolchain and dependencies, then runs `make check`.
 
-Branch: never work on or push a `claude/*` branch (`CLAUDE.md` § What we don't do). If on one, create a branch named after the setup (`chore/setup`) and push that instead, only with the user's go-ahead.
+## 5. Trim (only if the pipeline is dropped)
 
-## 6. Next
+`git rm` `plan-write`, `plan-converge`, `plan-review`, `plan-pilot`, `prd-autopilot`, `to-prd`, `check-net`, `warn-review`, `guideline`, `plan-progress`, `scripts/progress_*`, `tests/test_progress_tidy.py`, the template's test run in `make test`, and § Plans of `CLAUDE.md`. Then fix what still names them: `fix-bug` (its unattended mode; its sub-agents' questions go to the user instead of a `guideline` agent), `git-commit` (§ `progress.md` and the unattended callers), `tdd`'s description, `README.md`'s skill lists.
+
+## 6. Prove it
+
+Run `make test`, then `make check`. Both must pass. A red target is fixed with the user (a missing tool, a wrong command), never by weakening a check. A target that cannot run in this session (a toolchain or service missing here) is said plainly, and how to run it is written in `CLAUDE.md` § Checks.
+
+## 7. Commit
+
+Run `git-commit` in place; the user holds the gate. One commit, `chore: bootstrap <project name> from the template`.
+
+Branch: never work on or push a `claude/*` branch (`CLAUDE.md` § What we don't do). If on one, create a branch named after the work (`chore/bootstrap`) and push that, only with the user's go-ahead.
+
+## 8. Next
 
 Print what to run next, in a new session:
 
@@ -56,4 +69,4 @@ Print what to run next, in a new session:
 /grill-me <what you want to build first>
 ```
 
-then `/plan-write` at the end of the grilling, `/plan-converge docs/plan-1.md`, and `/plan-pilot docs/plan-1.md` — or, for a single bug, `/fix-bug <symptom>`.
+then `/plan-write` at the end of the grilling, `/plan-converge docs/plan-1.md`, and `/plan-pilot docs/plan-1.md`.
