@@ -11,7 +11,7 @@ Interactive: the user answers, you write. Questions are asked **in plain text, o
 
 ## 1. Check the starting point
 
-- The tree holds only the template's files (`.claude/`, `CLAUDE.md`, `Makefile`, `README.md`, `scripts/progress_*`, `tests/test_progress_tidy.py`, `.gitignore`) and `CLAUDE.md` still says "Template not set up yet". Anything else (project code already there, setup already done) → tell the user and ask whether to go on; never overwrite their files.
+- The tree holds only the template's files (`.claude/`, `CLAUDE.md`, `Makefile`, `README.md`, `.gitignore`) and `CLAUDE.md` still says "Template not set up yet". Anything else (project code already there, setup already done) → tell the user and ask whether to go on; never overwrite their files.
 - `make test` passes on the template as shipped. Red → report it before changing anything.
 - Note the current branch and the remote.
 - Note which toolchains are installed in this session (`python3`, `node`, `go`, `cargo`, `java`…): it bounds what can be proven green here.
@@ -42,14 +42,14 @@ Install the dependencies so the next step can run them.
 
 ## 4. Wire the targets
 
-- **`Makefile`**: `test` runs the project's test runner **and** `python3 -m unittest discover tests` (it covers `scripts/progress_*`, which `plan-pilot` relies on; drop it only with the pipeline). Keep the project's tests and the template's apart if the runners would collide (e.g. the project's tests outside `tests/`, or the template's under `tests/template/`). `check` depends on `test` plus one target per slow check (`lint`, `format-check`, `typecheck`…) so `make -k check` reports them all. Add `install` for the dependencies. Keep `help` in sync.
-- **`CLAUDE.md`**: replace the placeholder and drop the "Template not set up yet" line. § Checks names the real commands, the install step, and what the net needs; § Ground rules lists the rules with their goals, or is deleted; § Language follows answer 6. Keep the sections the skills cite: § Checks, § Ground rules (if kept), § Language, § What we don't do, § Plans (if the pipeline is kept). Add a line on the source layout.
+- **`Makefile`**: `test` runs the project's test runner **and** keeps its dependency on `test-template` (the template's tooling under `.claude/`: the pre-push hook and `plan-pilot`'s scripts). Make sure the project's runner does not also discover the tests under `.claude/` (exclude it in the runner's configuration if needed). `check` depends on `test` plus one target per slow check (`lint`, `format-check`, `typecheck`…) so `make -k check` reports them all. Add `install` for the dependencies. Keep `help` in sync.
+- **`CLAUDE.md`**: replace the placeholder and drop the "Template not set up yet" line. § Checks names the real commands, the install step, and what the net needs; § Ground rules lists the rules with their goals, or is deleted; § Language follows answer 6. Keep the sections the skills cite: § Checks, § Ground rules (if kept), § Language, § What we don't do, § Branches, § Plans (if the pipeline is kept). Add a line on the source layout.
 - **`README.md`**: the project's name and description, how to install and run the tests; keep § Working with Claude, drop the template's Quickstart.
 - **CI** (answer 8): a workflow that installs the toolchain and dependencies, then runs `make check`.
 
 ## 5. Trim (only if the pipeline is dropped)
 
-`git rm` `plan-write`, `plan-converge`, `plan-review`, `plan-pilot`, `prd-autopilot`, `to-prd`, `check-net`, `warn-review`, `guideline`, `plan-progress`, `scripts/progress_*`, `tests/test_progress_tidy.py`, the template's test run in `make test`, and § Plans of `CLAUDE.md`. Then fix what still names them: `fix-bug` (its unattended mode; its sub-agents' questions go to the user instead of a `guideline` agent), `git-commit` (§ `progress.md` and the unattended callers), `tdd`'s description, `README.md`'s skill lists.
+`git rm` `plan-write`, `plan-converge`, `plan-review`, `plan-pilot` (its scripts and tests with it), `prd-autopilot`, `to-prd`, `check-net`, `warn-review`, `guideline`, the `plan-pilot` line of `test-template`, and § Plans of `CLAUDE.md`. Then fix what still names them: `fix-bug` (its unattended mode; its sub-agents' questions go to the user instead of a `guideline` agent), `git-commit` (§ `progress.md` and the unattended callers), `tdd`'s description, `README.md`'s skill lists.
 
 ## 6. Prove it
 
@@ -57,9 +57,9 @@ Run `make test`, then `make check`. Both must pass. A red target is fixed with t
 
 ## 7. Commit
 
-Run `git-commit` in place; the user holds the gate. One commit, `chore: bootstrap <project name> from the template`.
+`git rm -r .claude/skills/setup` — this skill is used once, and the template stays the reference for the next project. Then run `git-commit` in place; the user holds the gate. One commit, `chore: bootstrap <project name> from the template`, carrying the skill's removal too.
 
-Branch: never work on or push a `claude/*` branch (`CLAUDE.md` § What we don't do). If on one, create a branch named after the work (`chore/bootstrap`) and push that, only with the user's go-ahead.
+Branch (`CLAUDE.md` § Branches): on a `claude/*` branch, create `chore/bootstrap` first, then push there.
 
 ## 8. Next
 

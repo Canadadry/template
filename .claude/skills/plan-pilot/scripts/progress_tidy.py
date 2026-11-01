@@ -3,7 +3,7 @@
 
 usage: progress_tidy.py [--stdout] [path]   (path defaults to progress.md)
 
-The hook of scripts/progress_check.sh refuses a new line before an existing
+The hook of progress_check.sh refuses a new line before an existing
 [x], so once anything after a step is ticked, a step's new children are
 appended at the end, in a top-level group naming the step:
 

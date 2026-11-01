@@ -13,7 +13,7 @@ No human responds during this run. Every `QUESTION:` from any sub-agent goes to 
 
 `progress.md` at the root is the run's checklist: what is done and what is left, read by the user while you work. Before the first step:
 
-1. Make sure the net can run (whatever `CLAUDE.md` § Checks says it needs) and is green before any step: `make check` passing. A red net at the start is reported, not worked around. Then run `scripts/progress_check.sh --install`. From then on git refuses any commit that ticks no new `[x]` in `progress.md`; `git-commit` § `progress.md` says how each commit satisfies it.
+1. Make sure the net can run (whatever `CLAUDE.md` § Checks says it needs) and is green before any step: `make check` passing. A red net at the start is reported, not worked around. Then run `.claude/skills/plan-pilot/scripts/progress_check.sh --install`. From then on git refuses any commit that ticks no new `[x]` in `progress.md`; `git-commit` § `progress.md` says how each commit satisfies it.
 2. `progress.md` exists and every item is `[x]` (a finished run) → `git rm` it, and that run's plan file if it is still in `docs/`, and commit (`docs:`). Some item is `[ ]` → it is this plan's, resumed: keep it, or stop and report if it belongs to another plan.
 3. No `progress.md` → write it: a nested `- [ ]` list indented by 2 spaces, one top-level item per group of steps as the plan names them (phase, part, chunk…), one child per step, `[x]` for each step that already has a note. Commit it (`docs:`).
 

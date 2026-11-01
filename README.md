@@ -16,7 +16,7 @@ test-driven implementation, bug fixing with proven causes, and commits.
    It asks a few questions, one at a time (the project, its stack and
    tools), then scaffolds a minimal skeleton with one passing test, wires
    `make test` and `make check`, fills `CLAUDE.md`, trims what you don't
-   need, proves both targets green and commits.
+   need, proves both targets green, commits, and removes itself.
 3. Start your first piece of work, in a new session:
 
    ```
@@ -31,12 +31,15 @@ test-driven implementation, bug fixing with proven causes, and commits.
 | `make check` — the net: everything that must be green before a push | `Makefile`, `CLAUDE.md` § Checks |
 | Project rules every change must respect | `CLAUDE.md` § Ground rules |
 | Plans, PRDs | `docs/plan-<N>.md`, `docs/prd/triage/` |
-| A running plan's checklist | `progress.md`, guarded by `scripts/progress_check.sh` |
+| A running plan's checklist | `progress.md` at the root, guarded by a hook `plan-pilot` installs |
+| Branch names: `<type>/<short-topic>` or `plan-<N>-<topic>`, never `claude/*` | `CLAUDE.md` § Branches, enforced by `.claude/hooks/no_claude_branch.sh` |
+| The template's own tooling and its tests (`make test-template`) | `.claude/` only: the project's tree stays the project's |
 | Throwaway files | `tmp/` (git-ignored) |
 
 `.claude/settings.json` denies merging pull requests (merging is the
 owner's job) and `AskUserQuestion` (unattended runs must never block on a
-question: a `guideline` agent answers instead).
+question: a `guideline` agent answers instead), and installs the pre-push
+hook at the start of every session.
 
 ## Working with Claude
 
@@ -62,8 +65,4 @@ back to green), `help-me-debug` (proves a bug's cause), `git-commit`,
 `plan-review`, `warn-review` (design smells at each phase end), `guideline`
 (the stand-in human during unattended runs).
 
-### The plan-progress plugin
-
-`.claude/skills/plan-progress` shows `progress.md` in a pane and the status
-line, adds a `/progress` command, and installs the git hook that refuses a
-commit ticking nothing in `progress.md` while a plan runs.
+Follow a running plan by reading `progress.md` at the root of its branch.

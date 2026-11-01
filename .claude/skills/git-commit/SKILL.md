@@ -42,14 +42,14 @@ Message: feat: import CSV files with a header row
 - Any unattended caller (`prd-autopilot`, a `skill:` step's skill, `fix-bug` under `check-net` or `plan-pilot`) → the caller accepts or refuses on its own checks; nobody waits.
 
 ### 6. Commit
-On acceptance: `git add <files>`, then commit with the agreed message, plus the attribution trailers the session's instructions ask for, if any.
+On acceptance: `git add <files>`, then commit with the agreed message, plus the attribution trailers the session's instructions ask for, if any. Then push it (`CLAUDE.md` § Branches; the session's first commit creates the branch first) — unless the caller is an unattended one: `prd-autopilot`, `check-net` and `plan-pilot` push themselves, only once the net is green.
 
 ### `progress.md` at the root — every commit ticks
-While it exists (a `plan-pilot` run), the hook installed by `scripts/progress_check.sh --install` refuses any commit that ticks no new `[x]` in it, even under `--no-verify`. So:
+While it exists (a `plan-pilot` run), the hook installed by `.claude/skills/plan-pilot/scripts/progress_check.sh --install` refuses any commit that ticks no new `[x]` in it, even under `--no-verify`. So:
 - The unit has its own item (a chunk, a step, a module) → stage `progress.md` with that item ticked.
 - It has none (a `fix:`, a PRD removal) → fold it into `HEAD` if `HEAD` is not pushed (`git branch -r --contains HEAD` prints nothing): `git commit --amend`, this message appended to `HEAD`'s body. `HEAD` pushed → don't commit: leave it in the working tree, the next commit that ticks carries it and its message.
 - A refusal is never bypassed: fix `progress.md` per the hook's message.
-- New lines refused because an `[x]` follows them → append them at the end in a top-level group naming the step instead (`- [ ] Step <id> chunks` for its children, `- [ ] Added after step <id>` for new steps after it); `scripts/progress_tidy.py` moves such groups back under their step, in a `docs:` commit of its own that the hook accepts though it ticks nothing.
+- New lines refused because an `[x]` follows them → append them at the end in a top-level group naming the step instead (`- [ ] Step <id> chunks` for its children, `- [ ] Added after step <id>` for new steps after it); `.claude/skills/plan-pilot/scripts/progress_tidy.py` moves such groups back under their step, in a `docs:` commit of its own that the hook accepts though it ticks nothing.
 - The commit ticks the last `[ ]` → follow it with a `docs:` commit that `git rm`s `progress.md` and the finished plan file (`plan-pilot` § Find the next step).
 
 ## Commit message format

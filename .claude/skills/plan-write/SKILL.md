@@ -45,7 +45,7 @@ What the conversation left unresolved. Empty if nothing.
 
 ## End
 
-Commit the plan alone, `docs: add plan N — <title>`: a new session only sees what is committed. Then print the next command, to run in a new session:
+Commit the plan alone, `docs: add plan N — <title>`, and push it: a new session only sees what is pushed. On a `claude/*` branch, create `plan-<N>-<topic>` first (`CLAUDE.md` § Branches). Then print the next command, to run in a new session:
 
 ```
 next: /plan-converge docs/plan-N.md

@@ -9,7 +9,7 @@
 # line is kept with its text and order; no new line comes before a base [x];
 # no [x] goes back to [ ]; at least one more [x]. Creating the file is free;
 # deleting it needs every base item [x]. Without the file, nothing is checked.
-# One exception: a change that is exactly scripts/progress_tidy.py's tidy-up
+# One exception: a change that is exactly progress_tidy.py's tidy-up
 # of the base (appended groups moved back under their step) is accepted.
 
 set -u
@@ -19,7 +19,7 @@ if [ "${1:-}" = "--install" ]; then
     mkdir -p "$hooks"
     cat >"$hooks/prepare-commit-msg" <<'EOF'
 #!/bin/sh
-exec "$(git rev-parse --show-toplevel)/scripts/progress_check.sh" "$@"
+exec "$(git rev-parse --show-toplevel)/.claude/skills/plan-pilot/scripts/progress_check.sh" "$@"
 EOF
     chmod +x "$hooks/prepare-commit-msg"
     exit 0
@@ -46,7 +46,7 @@ git show ":progress.md" >"$new" 2>/dev/null || has_new=0
 
 fail() {
     echo "progress.md: $*" >&2
-    echo "progress.md: commit refused (see scripts/progress_check.sh)" >&2
+    echo "progress.md: commit refused (see .claude/skills/plan-pilot/scripts/progress_check.sh)" >&2
     exit 1
 }
 

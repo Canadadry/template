@@ -35,7 +35,6 @@ conversation with the owner can be in French.
 
 - **Never merge a pull request**, in any way (GitHub tool, `gh`, auto-merge).
   Merging is the owner's job; denied in `.claude/settings.json`.
-- Never push a `claude/*` branch: name the branch after what the work does.
 
 ## Plans
 
@@ -43,4 +42,18 @@ Plans live in `docs/plan-<N>.md` and are run with the skills of `.claude/skills/
 `grill-me` → `plan-write` → `plan-converge` → `plan-pilot`. A finished plan is
 deleted (git is the history); findings go to `notes/`, not to the plan.
 `progress.md` at the root is a running plan's checklist, guarded by the git
-hook `scripts/progress_check.sh --install` installs.
+hook `plan-pilot` installs (`.claude/skills/plan-pilot/scripts/progress_check.sh --install`).
+
+## Branches
+
+- **Never work on or push a `claude/*` branch.** A session starts on one; at
+  its first commit it creates a branch named after the work, then commits and
+  pushes there as it goes (`git push -u origin <branch>`).
+- Name: `<type>/<short-topic>`, the type of the first commit (`feat/import-csv`,
+  `fix/empty-header`, `chore/ci`); `plan-<N>-<topic>` for a session that
+  starts by writing a plan.
+- The pre-push hook `.claude/hooks/no_claude_branch.sh` refuses any push to
+  a `claude/*` branch; the `SessionStart` hook of `.claude/settings.json`
+  installs it.
+- No pull request unless the owner asks for one; `plan-pilot` opens its own
+  at the end of a finished plan.

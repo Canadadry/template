@@ -1,7 +1,7 @@
-"""Unit tests for scripts/progress_tidy.py, and for the tidy-up exception of
-scripts/progress_check.sh (the progress.md hook). Host only: each hook test
+"""Unit tests for progress_tidy.py, and for the tidy-up exception of
+progress_check.sh (the progress.md hook). Host only: each hook test
 makes its own git repository in a temporary directory.
-Run: python3 -m unittest discover tests"""
+Run: make test-template"""
 
 import os
 import subprocess
