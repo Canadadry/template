@@ -7,6 +7,15 @@ description: Sharpens a plan file before plan-pilot: loops plan-review rounds, a
 
 Generic, project-agnostic. Takes one argument: the path to a plan file. Runs a batch pre-flight pass — not meant to run mid-implementation (that's `plan-pilot`'s job, which consults `plan-review` directly and more lightly).
 
+## Gate: no human in the plan
+
+`plan-pilot` runs unattended to the end, so the plan must never wait on a person. Before round 1, and again on every proposal a round accepts, find each step, check or `Done when` item that needs a human: a play test, an owner review or approval, a manual check, a look at the screen, a device to plug in, a decision left to someone.
+
+- It can be automated → rewrite it as the automated check that proves the same thing (a test, a scripted run, a screenshot compared to a reference, a measured threshold).
+- It cannot → remove it from the plan. List it in the end report under `For the owner, after the run`, with what it was meant to prove.
+
+This is the one exception to "never touch content/scope": a plan left with a human dependency is not ready. The gate's changes are committed on the temp branch like a round's.
+
 ## Loop
 
 Repeat each round:
@@ -47,7 +56,7 @@ This is where traceability lives — never as prose injected into the plan file 
 
 ## End
 
-Report the rounds (applied, rejected, why it stopped), then print the next command, to run in a new session:
+Report the gate's changes (rewritten, removed), the `For the owner, after the run` list, the rounds (applied, rejected, why it stopped), then print the next command, to run in a new session:
 
 ```
 next: /plan-pilot <plan file>
