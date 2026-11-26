@@ -30,7 +30,7 @@ It reports `VERIFIED:`, or `FAILED:` plus detail — which stops the loop and go
 ### 4. Commit
 On `VERIFIED:`, run the `git-commit` skill in place for this chunk (or the whole PRD). You are the gate: accept when the verifier's checks hold.
 
-With `progress.md` at the root: the PRD's first commit adds, under the current step's item, one `- [ ]` child per chunk (one for a PRD without chunks), and stages the PRD file itself (refused by the hook → a `Step <id> chunks` group at the end, `git-commit` § `progress.md`); every chunk's commit ticks its child.
+With `progress.md` at the root: the PRD's first commit adds, under the current step's item, one `- [ ]` child per chunk (one for a PRD without chunks), and stages the PRD file itself; the children are numbered under the step (`<step>.1`, `<step>.2`…, `git-commit` § `progress.md`); every chunk's commit ticks its child.
 
 More chunks remain → back to step 2 for the next one; the PRD stays in triage until its last chunk lands.
 

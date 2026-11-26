@@ -15,9 +15,9 @@ No human responds during this run. Every `QUESTION:` from any sub-agent goes to 
 
 1. Make sure the net can run (whatever `CLAUDE.md` § Checks says it needs) and is green before any step: `make check` passing. A red net at the start is reported, not worked around. Then run `.claude/skills/plan-pilot/scripts/progress_check.sh --install`. From then on git refuses any commit that ticks no new `[x]` in `progress.md`; `git-commit` § `progress.md` says how each commit satisfies it.
 2. `progress.md` exists and every item is `[x]` (a finished run) → `git rm` it, and that run's plan file if it is still in `docs/`, and commit (`docs:`). Some item is `[ ]` → it is this plan's, resumed: keep it, or stop and report if it belongs to another plan.
-3. No `progress.md` → write it: a nested `- [ ]` list indented by 2 spaces, one top-level item per group of steps as the plan names them (phase, part, chunk…), one child per step, `[x]` for each step that already has a note. Commit it (`docs:`).
+3. No `progress.md` → write it: a nested `- [ ] <number> <text>` list indented by 2 spaces, one top-level item per group of steps as the plan names them (phase, part, chunk…), one child per step, `[x]` for each step that already has a note. Numbers follow the tree: `1`, `2`… at the top, `2.1`, `2.2`… under `2`, `2.1.1`… under `2.1`. Commit it (`docs:`).
 
-Rules the hook enforces: an existing line keeps its text and its place; a new line never goes before an existing `[x]`; an `[x]` never goes back. A step added to the plan later goes at the end.
+Rules the hook enforces (`.claude/skills/plan-pilot/scripts/progress_check.py`): every line is numbered by its place in the tree; no hole — an item is `[x]` only once every item before it is (its parents excepted), and a parent only once all its children are; an `[x]` line never changes; a `[ ]` line keeps its text and order, only its number may shift; an `[x]` never goes back. So everything done is one block at the top, and a new item (a fix, a review, a step added to the plan) goes where the run is: right after the last `[x]`, numbered by its place, the `[ ]` items after it renumbered — e.g. `1.3 Fix of 1.2`, the old `1.3` becoming `1.4`.
 
 ## Per-step cycle
 
@@ -27,7 +27,7 @@ Repeat until there's no next step:
 The plan's `Step notes` section (whatever its number) is the progress record: one note per finished step, `### Step <phase>.<step>`. The next step is the first one in the plan's order without a note. Every step has one → the plan is complete: check its `Done when` list, then finish it:
 
 - Every item holds → `git rm` the plan file and `progress.md` in one commit (`docs:`, the hook allows the deletion once every item is `[x]`), push, open the pull request (§ Pull request), report, and stop. A finished plan never stays in `docs/` (CLAUDE.md § Plans).
-- An item waits on the human (a review, a play test) → keep both files, its `[ ]` open, and report it. Whoever makes the commit that ticks it, agent or human, follows it with that same `docs:` commit removing the plan file and `progress.md`; say so in the report, with the exact commands.
+- An item cannot be checked without a human → the plan was not ready (`plan-converge` § Gate): stop and report it, open no pull request. Never add an item to `progress.md` that waits on a human.
 
 ### 2. Run it
 
@@ -54,10 +54,10 @@ After any step that was risky or taught something new, spawn a fresh `plan-revie
 
 ## Pull request
 
-Only when the plan is finished — the commit removing the plan file and `progress.md` pushed — open a pull request against the default branch with the GitHub tools. A run that stops on a failure or waits on the human opens none. The plan file is gone by then: write the body from the step notes as they were before that commit. One may already exist for the branch (opened automatically, titled after the first commit): update its title and body instead of opening another.
+Only when the plan is finished — the commit removing the plan file and `progress.md` pushed — open a pull request against the default branch with the GitHub tools. A run that stops on a failure opens none. The plan file is gone by then: write the body from the step notes as they were before that commit. One may already exist for the branch (opened automatically, titled after the first commit): update its title and body instead of opening another.
 
 - **Title**: `Plan <N>: <outcome>` — what the run delivered and, if it fell short, how, in under 100 characters. Never a commit subject. Example: `Plan 1: CSV import end to end — Excel files still unsupported`.
-- **Body**: one line on the plan and how the run ended; one section per step with its result in figures, taken from its step note; what the reviewer must act on (a setup to rerun, a changed interface); what is left open (`warn-review` warnings not acted on, an item the human waived). Mirror the repository's PR template if it has one.
+- **Body**: one line on the plan and how the run ended; one section per step with its result in figures, taken from its step note; what the reviewer must act on (a setup to rerun, a changed interface); what is left open (`warn-review` warnings not acted on). Mirror the repository's PR template if it has one.
 - Never merge it (CLAUDE.md § What we don't do).
 
 ## Boundaries

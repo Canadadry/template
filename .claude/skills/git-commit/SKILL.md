@@ -49,7 +49,7 @@ While it exists (a `plan-pilot` run), the hook installed by `.claude/skills/plan
 - The unit has its own item (a chunk, a step, a module) → stage `progress.md` with that item ticked.
 - It has none (a `fix:`, a PRD removal) → fold it into `HEAD` if `HEAD` is not pushed (`git branch -r --contains HEAD` prints nothing): `git commit --amend`, this message appended to `HEAD`'s body. `HEAD` pushed → don't commit: leave it in the working tree, the next commit that ticks carries it and its message.
 - A refusal is never bypassed: fix `progress.md` per the hook's message.
-- New lines refused because an `[x]` follows them → append them at the end in a top-level group naming the step instead (`- [ ] Step <id> chunks` for its children, `- [ ] Added after step <id>` for new steps after it); `.claude/skills/plan-pilot/scripts/progress_tidy.py` moves such groups back under their step, in a `docs:` commit of its own that the hook accepts though it ticks nothing.
+- A new item (a fix, a chunk, a review) goes right after the last `[x]`, numbered by its place (`<parent>.<n>`), and the `[ ]` items after it are renumbered; never at the end of the file, never before an `[x]`. Rules: `plan-pilot` § Start.
 - The commit ticks the last `[ ]` → follow it with a `docs:` commit that `git rm`s `progress.md` and the finished plan file (`plan-pilot` § Find the next step).
 
 ## Commit message format

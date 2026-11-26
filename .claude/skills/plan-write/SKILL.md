@@ -39,7 +39,7 @@ What the conversation left unresolved. Empty if nothing.
 (empty — plan-pilot appends a note after each step)
 ```
 
-- Every step is small enough to fail fast, and says how it is verified.
+- Every step is small enough to fail fast, and says how it is verified — by a machine. No step, check or `Done when` item waits on a human (a play test, a review, an approval): `plan-pilot` runs unattended, and `plan-converge` removes any that remain.
 - A step that is entirely a skill's job (a project skill run over one module, …) is written `skill: <name> — <scope>`: plan-pilot calls that skill instead of writing a PRD.
 - English, per `CLAUDE.md`. No "Draft:" line.
 
