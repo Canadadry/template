@@ -76,6 +76,20 @@ class TidyTest(unittest.TestCase):
             "- [ ] P\n  - [x] 1.1 One\n  - [x] 1.1b B\n  - [ ] 1.1c C\n  - [ ] 1.2 Two\n",
         )
 
+    def test_steps_written_with_a_step_prefix(self):
+        text = (
+            "- [x] Phase 1 — First\n  - [x] Step 1.1 — One\n  - [x] Step 1.2 — Two\n"
+            "- [ ] Phase 2 — Second\n  - [ ] Step 2.1 — Three\n"
+            "- [x] Added after step 1.2\n  - [x] Fix: a seam pushed sideways\n"
+            "- [ ] Step 2.1 chunks\n  - [ ] chunk 1: a\n"
+        )
+        self.assertEqual(
+            progress_tidy.tidy(text),
+            "- [x] Phase 1 — First\n  - [x] Step 1.1 — One\n  - [x] Step 1.2 — Two\n"
+            "  - [x] Fix: a seam pushed sideways\n"
+            "- [ ] Phase 2 — Second\n  - [ ] Step 2.1 — Three\n    - [ ] chunk 1: a\n",
+        )
+
     def test_unknown_step_fails_and_leaves_the_file(self):
         text = "- [ ] P\n  - [ ] 1.1 One\n- [ ] Step 9.9 chunks\n  - [ ] chunk 1: a\n"
         with tempfile.TemporaryDirectory() as tmp:

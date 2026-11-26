@@ -11,8 +11,8 @@ appended at the end, in a top-level group naming the step:
   - [ ] Added after step <id>  its children become the step's next siblings,
                                after the earlier groups for the same step.
 
-The step is the item whose text starts with "<id> " (one level below the
-top). The group lines themselves are dropped, every other line is kept with
+The step is the item one level below the top whose text starts with
+"<id> " or "Step <id> " (case ignored). The group lines themselves are dropped, every other line is kept with
 its text and tick. Rewrites the file in place (--stdout prints it instead).
 A group naming no step leaves the file unchanged and exits 1. The hook
 accepts a commit whose only change to progress.md is this tidy-up.
@@ -24,6 +24,7 @@ import sys
 ITEM = re.compile(r"^((?:  )*)- \[[ x]\] (.*)$")
 CHUNKS = re.compile(r"^Step (\S+) chunks$")
 ADDED = re.compile(r"^Added after step (\S+)$")
+STEP_ID = re.compile(r"^(?:step\s+)?(\S+)", re.IGNORECASE)
 
 
 class TidyError(Exception):
@@ -65,7 +66,7 @@ def tidy(text):
     steps = {}
     for root in roots:
         for step in root[2]:
-            steps.setdefault(text_of(step).split(" ", 1)[0], (root, step))
+            steps.setdefault(STEP_ID.match(text_of(step)).group(1), (root, step))
     kept, groups = [], []
     for root in roots:
         name = text_of(root)
